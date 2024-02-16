@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/url"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/v4/api/server/structs"
-	"github.com/prysmaticlabs/prysm/v4/consensus-types/primitives"
-	ethpb "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
-	"github.com/prysmaticlabs/prysm/v4/testing/assert"
-	"github.com/prysmaticlabs/prysm/v4/testing/require"
-	"github.com/prysmaticlabs/prysm/v4/validator/client/beacon-api/mock"
+	"github.com/prysmaticlabs/prysm/v5/api/server/structs"
+	"github.com/prysmaticlabs/prysm/v5/consensus-types/primitives"
+	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
+	"github.com/prysmaticlabs/prysm/v5/testing/assert"
+	"github.com/prysmaticlabs/prysm/v5/testing/require"
+	"github.com/prysmaticlabs/prysm/v5/validator/client/beacon-api/mock"
 )
 
 const stringPubKey = "0x8000091c2ae64ee414a54c1cc1fc67dec663408bc636cb86756e0200e41a75c8f86603f104f02c856983d2783116be13"
@@ -26,6 +27,7 @@ func getPubKeyAndReqBuffer(t *testing.T) ([]byte, *bytes.Buffer) {
 		Ids:      []string{stringPubKey},
 		Statuses: []string{},
 	}
+
 	reqBytes, err := json.Marshal(req)
 	require.NoError(t, err)
 	return pubKey, bytes.NewBuffer(reqBytes)
@@ -187,6 +189,27 @@ func TestIndex_JsonResponseError(t *testing.T) {
 		"/eth/v1/beacon/states/head/validators",
 		nil,
 		reqBuffer,
+		&stateValidatorsResponseJson,
+	).Return(
+		errors.New("some specific json error"),
+	).Times(1)
+
+	req := structs.GetValidatorsRequest{
+		Ids:      []string{stringPubKey},
+		Statuses: []string{},
+	}
+
+	queryParams := url.Values{}
+	for _, id := range req.Ids {
+		queryParams.Add("id", id)
+	}
+	for _, st := range req.Statuses {
+		queryParams.Add("status", st)
+	}
+
+	jsonRestHandler.EXPECT().Get(
+		ctx,
+		buildURL("/eth/v1/beacon/states/head/validators", queryParams),
 		&stateValidatorsResponseJson,
 	).Return(
 		errors.New("some specific json error"),

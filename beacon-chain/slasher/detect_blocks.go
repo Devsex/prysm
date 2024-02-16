@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	slashertypes "github.com/prysmaticlabs/prysm/v4/beacon-chain/slasher/types"
-	ethpb "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
+	slashertypes "github.com/prysmaticlabs/prysm/v5/beacon-chain/slasher/types"
+	ethpb "github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1"
 	"go.opencensus.io/trace"
 )
 
@@ -37,7 +37,7 @@ func (s *Service) detectProposerSlashings(
 		}
 
 		// If we have seen this proposal before, we check if it is a double proposal.
-		if isDoubleProposal(incomingProposal.SigningRoot, existingProposal.SigningRoot) {
+		if isDoubleProposal(incomingProposal.HeaderRoot, existingProposal.HeaderRoot) {
 			doubleProposalsTotal.Inc()
 
 			slashing := &ethpb.ProposerSlashing{
